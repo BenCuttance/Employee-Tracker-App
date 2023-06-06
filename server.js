@@ -10,7 +10,7 @@ app.use(express.json());
 
 // Connect to database
 
-const db = mysql.createConnection (
+const db = mysql.createConnection(
     {
         host: 'localhost',
         user: 'root',
@@ -31,31 +31,38 @@ const questions = [
     },
 ]
 
-    const employeeAdd = [
-        {
-        type: 'input',
-        message: "What is the employee's first name?",
-        name: 'firstName'
-        },
-        {
-            type: 'input',
-            message: "What is the employee's last name?",
-            name: 'lastName'
-        },
-        {
-            type: 'list',
-            message: "What is the employee's role?",
-            choices: ['English Teacher', 'Maths Teacher', 'Science Teacher', 'Media Teacher', 'P.E Teacher', 'Principle'],
-            name: 'employeeRole'
+
+function addEmployee() { 
+    db.query('SELECT id, title, salary FROM role', function (err, results){
+        console.log(results)
+        const employeeAdd = [
+            {
+                type: 'input',
+                message: "What is the employee's first name?",
+                name: 'firstName'
+            },
+            {
+                type: 'input',
+                message: "What is the employee's last name?",
+                name: 'lastName'
+            },
+            {
+                type: 'list',
+                message: "What is the employee's role?",
+                choices: results.map((element)=>{ return {name:`${element.title } (${element.salary})`, value:element.id}}),
+                // choices: ['English Teacher', 'Maths Teacher', 'Science Teacher', 'Media Teacher', 'P.E Teacher', 'Principle'],
+                name: 'employeeRole'
+            }
+        ]
+        inquirer.prompt(employeeAdd).then(answers => {
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+         VALUES ('${answers.firstName}', '${answers.lastName}', ${answers.employeeRole}, 1)`)
+            console.log(`${answers.firstName}, ${answers.lastName}, ${answers.employeeRole} added to list`)
         }
-    ]
-function addEmployee () {
-    inquirer.prompt(employeeAdd).then(answers => {
-    db.query(`INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
-     VALUES (999, '${answers.firstName}', '${answers.lastName}', 1, 106)`)
-        console.log(`${answers.firstName}, ${answers.lastName} added to list`)
-    }
- )}
+        )
+    })
+   
+}
 
 
 
@@ -79,32 +86,35 @@ const shutDown = () => {
 
 }
 
+// db.query(`UPDATE employee SET role_id = ${answers.newRole} where employee id = `)
 
 function ask() {
     inquirer.prompt(questions).then(answers => {
         switch (answers.opening) {
             case 'View All Employees': {
-              // NEED TO ADD DEPARTMENT AND SALARY TO QUERY
-                db.query('SELECT id AS ID, first_name As First_Name, last_name AS Last_Name FROM employee', function (err, results){
-                    console.log(results)
+                
+                db.query('SELECT employee.id AS ID, employee.first_name As First_Name, employee.last_name AS Last_Name, title, salary, employee.manager_id, CONCAT (manager.first_name, " ", manager.last_name) AS Manager FROM employee JOIN role ON employee.role_id = role.id LEFT JOIN employee AS manager ON employee.manager_id = manager.id ', function (err, results) 
+                { console.log(err)
+                    console.log()
+                    console.table(results)
                 })
-                    ask(); break;
+                ask(); break;
             }
             case 'View All Roles': {
                 // NEED TO ADD DEPARTMENT TO QUERY
-                db.query('SELECT id AS ID, title as Title, salary as Salary', function (err, results){
+                db.query('SELECT id AS ID, title as Title, salary as Salary', function (err, results) {
                     console.log(results)
                 })
-                ask(); break; 
+                ask(); break;
             }
             case 'Add Employee': {
-                // AUTO INCREMENT FEATURE?
-                addEmployee(); break;
                 
+                addEmployee(); break;
+
             }
             case 'View All Departments': {
-                
-                db.query('Select id as ID, name as Department FROM department', function (err, results){
+
+                db.query('Select id as ID, name as Department FROM department', function (err, results) {
                     console.log(results)
                 });
                 ask(); break;
