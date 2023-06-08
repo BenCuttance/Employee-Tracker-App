@@ -58,7 +58,7 @@ function addEmployee() {
         inquirer.prompt(employeeAdd).then(answers => {
             db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
          VALUES ('${answers.firstName}', '${answers.lastName}', ${answers.employeeRole}, 1)`)
-            console.log(`${answers.firstName}, ${answers.lastName}, ${answers.employeeRole} added to list`),
+            console.log(`${answers.firstName}, ${answers.lastName},  added to list`),
 
             ask()
         
@@ -70,15 +70,15 @@ function addEmployee() {
 
 // UPDATED EMPLOYEE FUNCTION
 function updateEmployee() {
-    db.query('SELECT * FROM employee JOIN role ON employee.role_id = role.id ', function (err, results){
+    db.query('SELECT * FROM employee JOIN role on employee.role_id = role.id', function (err, results1){
         console.log()
-        console.table(results)
-
+        console.table(results1)
+        db.query('SELECT * FROM role', function (err, results2){
         const employeeUpdate = [
             {
                 type: 'list',
                 message: 'Who would you like to update?',
-                choices: results.map((element) => { return { name: `${element.first_name} ${element.last_name}`, value: element.id } }),
+                choices: results1.map((element) => { return { name: `${element.first_name} ${element.last_name}`, value: element.id } }),
                 name:'updatedEmployee'
 
             },
@@ -86,7 +86,7 @@ function updateEmployee() {
             { 
                 type: 'list',
                 message: 'What is their new role?',
-                choices: results.map((element) => { return { name: `${element.title}`, value: element.department_id } }),
+                choices: results2.map((element) => { return { name: `${element.title}`, value: element.id } }),
                 name: 'updatedRole'
 
             }
@@ -101,7 +101,7 @@ function updateEmployee() {
             
            
             ask()
-
+        })
         })
     })
 }
