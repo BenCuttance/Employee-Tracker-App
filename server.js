@@ -15,7 +15,7 @@ const db = mysql.createConnection(
     {
         host: 'localhost',
         user: 'root',
-        password: 'Cutty1998!',
+        password: '<YOUR PASSWORD HERE>',
         database: 'database_db'
     },
     console.log('Connected to database')
@@ -250,7 +250,7 @@ function ask() {
 
             case 'Add Department': {
                 addDepartment();
-                ask();
+                
             
                 break;
             }
