@@ -1,14 +1,15 @@
 const inquirer = require('inquirer')
 const fs = require('fs')
 const mysql = require('mysql2');
-const express = require('express')
+const express = require('express');
+const { Console } = require('console');
 
 const app = express();
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Connect to database
+// CONNECTING TO DATABASE
 
 const db = mysql.createConnection(
     {
@@ -20,7 +21,7 @@ const db = mysql.createConnection(
     console.log('Connected to database')
 );
 
-// Prompts for quesions 
+// PROMPTS FOR QUESTIONS ON NPM START
 
 const questions = [
     {
@@ -31,10 +32,10 @@ const questions = [
     },
 ]
 
+// ADD EMPLOYEE TO DATABASE FUNCTION
+function addEmployee() {
+    db.query('SELECT id, title, salary FROM role', function (err, results) {
 
-function addEmployee() { 
-    db.query('SELECT id, title, salary FROM role', function (err, results){
-        console.log(results)
         const employeeAdd = [
             {
                 type: 'input',
@@ -49,23 +50,127 @@ function addEmployee() {
             {
                 type: 'list',
                 message: "What is the employee's role?",
-                choices: results.map((element)=>{ return {name:`${element.title } (${element.salary})`, value:element.id}}),
-                // choices: ['English Teacher', 'Maths Teacher', 'Science Teacher', 'Media Teacher', 'P.E Teacher', 'Principle'],
+                choices: results.map((element) => { return { name: `${element.title} (${element.salary})`, value: element.id } }),
+                
                 name: 'employeeRole'
             }
         ]
         inquirer.prompt(employeeAdd).then(answers => {
             db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
          VALUES ('${answers.firstName}', '${answers.lastName}', ${answers.employeeRole}, 1)`)
-            console.log(`${answers.firstName}, ${answers.lastName}, ${answers.employeeRole} added to list`)
+            console.log(`${answers.firstName}, ${answers.lastName}, ${answers.employeeRole} added to list`),
+
+            ask()
+        
         }
         )
     })
-   
+
+}
+
+// UPDATED EMPLOYEE FUNCTION
+function updateEmployee() {
+    db.query('SELECT * FROM employee JOIN role ON employee.role_id = role.id ', function (err, results){
+        console.log()
+        console.table(results)
+
+        const employeeUpdate = [
+            {
+                type: 'list',
+                message: 'Who would you like to update?',
+                choices: results.map((element) => { return { name: `${element.first_name} ${element.last_name}`, value: element.id } }),
+                name:'updatedEmployee'
+
+            },
+     
+            { 
+                type: 'list',
+                message: 'What is their new role?',
+                choices: results.map((element) => { return { name: `${element.title}`, value: element.department_id } }),
+                name: 'updatedRole'
+
+            }
+        ]
+
+        inquirer.prompt(employeeUpdate).then(answers => {
+           
+            db.query(`UPDATE employee 
+            SET role_id = ${answers.updatedRole} 
+            WHERE id = ${answers.updatedEmployee} `)
+            console.log(`Department id is now set to ${answers.updatedRole}`),
+            
+           
+            ask()
+
+        })
+    })
 }
 
 
+// ADD ROLE FUNCTION
+function addRole() {
+    db.query('SELECT id, title, salary FROM role  ', function (err, results) {
+       
 
+        const roleAdd = [
+            {
+                type: 'input',
+                message: "What is the name of the role?",
+                name: 'roleName'
+            },
+            {
+                type: 'list',
+                message: "What is the salary of the role?",
+                choices: ['40000', '45000', '50000', '55000', '60000'],
+                name: 'salary'
+            },
+            {
+                type: 'list',
+                message: "What department does this role belong to?",
+                choices: ['English', 'Maths', 'Science', 'Media', 'Physical Ed', 'Management'],
+                name: 'department'
+            }
+        ]
+        inquirer.prompt(roleAdd).then(answers => {
+            db.query(`INSERT INTO role (title, salary)
+         VALUES ('${answers.roleName}', '${answers.salary}')`)
+            console.log(`${answers.roleName}, Salary: ${answers.salary},Under ${answers.department} department added to role`),
+                
+            ask()
+            
+            
+        }
+        )
+    })
+
+}
+
+// ADD DEPARTMENT FUNCTION
+
+function addDepartment() {
+    db.query('SELECT id, title, salary FROM role', function (err, results) {
+
+        const departmentAdd = [
+            {
+                type: 'input',
+                message: "What is the name of the department",
+                name: 'newDepartment'
+            },
+        
+        ]
+        inquirer.prompt(departmentAdd).then(answers => {
+            db.query(`INSERT INTO department (name)
+         VALUES ('${answers.newDepartment}')`)
+            console.log(`${answers.newDepartment} added to department list`),
+
+            ask()
+            
+        }
+        )
+    })
+
+}
+// SHUT DOWN COUNTER ON EXIT FUNCTION
 const shutDown = () => {
     console.log('Shutting Down in...'),
         setTimeout(() => {
@@ -86,50 +191,82 @@ const shutDown = () => {
 
 }
 
-// db.query(`UPDATE employee SET role_id = ${answers.newRole} where employee id = `)
 
+// FUNCTION TO ASK QUESTION VIA INQUIRER
 function ask() {
     inquirer.prompt(questions).then(answers => {
         switch (answers.opening) {
             case 'View All Employees': {
-                
-                db.query('SELECT employee.id AS ID, employee.first_name As First_Name, employee.last_name AS Last_Name, title, salary, employee.manager_id, CONCAT (manager.first_name, " ", manager.last_name) AS Manager FROM employee JOIN role ON employee.role_id = role.id LEFT JOIN employee AS manager ON employee.manager_id = manager.id ', function (err, results) 
-                { console.log(err)
+
+                db.query('SELECT employee.id AS ID, employee.first_name As First_Name, employee.last_name AS Last_Name, title, salary, employee.manager_id, CONCAT (manager.first_name, " ", manager.last_name) AS Manager FROM employee JOIN role ON employee.role_id = role.id LEFT JOIN employee AS manager ON employee.manager_id = manager.id ', function (err, results) {
+                    console.log(err)
                     console.log()
                     console.table(results)
                 })
-                ask(); break;
+                ask();
+                 break;
             }
             case 'View All Roles': {
-                // NEED TO ADD DEPARTMENT TO QUERY
-                db.query('SELECT id AS ID, title as Title, salary as Salary', function (err, results) {
-                    console.log(results)
+                
+                db.query('SELECT id AS ID, title as Title, salary as Salary FROM role', function (err, results) {
+                    console.log()
+                    console.table(results)
+
                 })
-                ask(); break;
+                ask();
+                break;
+            }
+
+            case 'Update Employee Role': {
+
+                updateEmployee();
+                
+                break;
+
+            }
+
+            case 'Add Role': {
+                
+                addRole();
+               
+               
+                break;
             }
             case 'Add Employee': {
-                
-                addEmployee(); break;
+
+                addEmployee()
+            
+                break;
 
             }
             case 'View All Departments': {
 
                 db.query('Select id as ID, name as Department FROM department', function (err, results) {
-                    console.log(results)
+                    console.log()
+                    console.table(results)
                 });
                 ask(); break;
+            }
+
+            case 'Add Department': {
+                addDepartment();
+                ask();
+            
+                break;
             }
             case 'Exit': {
                 shutDown()
                 return;
             }
-            default: console.log('Default beep boop'),
-                ask(); break;
+            
+            default: console.log('Default beep boop')
+                 
         }
-
+        
     })
 }
 
 
+// CALLS ASK FUNCTION ON NPM START
 ask()
 
