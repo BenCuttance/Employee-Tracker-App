@@ -57,4 +57,4 @@ Viewing all departments in database
 
 Github: https://github.com/BenCuttance/Employee-Tracker-App
 
-Video: 
+Video: https://drive.google.com/file/d/1JEQGViBfQqokajran46CDSiJ7Gl3D3Gt/view 
